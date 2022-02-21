@@ -23,6 +23,12 @@ struct vetorDeFloats
   float x[VECTOR_SIZE];
 } vetorDeFloats;
 
+struct maxMinRes
+{
+  float max;
+  float min;
+} maxMinRes;
+
 int atende_cliente();
 int main(int argc, char *argv[])
 {
@@ -82,14 +88,24 @@ int main(int argc, char *argv[])
 int atende_cliente(int descritor, struct sockaddr_in endCli)
 {
   struct vetorDeFloats vetorzinho;
-  int n;
+  struct maxMinRes maxMin;
+  int n,z;
+  maxMin.max = 0;
+  maxMin.min = 1e10;
 
   memset(&vetorzinho, 0x0, sizeof(vetorzinho));
   n = recv(descritor, &vetorzinho, sizeof(vetorzinho), 0);
   for (int i = 0; i < 10000; i++)
   {
-    printf("vetoz[i] = %f\n", vetorzinho.x[i]);
+    if(vetorzinho.x[i]>maxMin.max){
+      maxMin.max = vetorzinho.x[i];
+    }
+    if(vetorzinho.x[i]<maxMin.min){
+      maxMin.min = vetorzinho.x[i];
+    }
+    
   }
+  z = send(descritor, &maxMin, sizeof(maxMin), 0);
   fprintf(stdout, "[%s:%u] => %f\n", inet_ntoa(endCli.sin_addr), ntohs(endCli.sin_port), vetorzinho.x[0]);
 
   fprintf(stdout, "Encerrando conexao com %s:%u ...\n\n", inet_ntoa(endCli.sin_addr), ntohs(endCli.sin_port));

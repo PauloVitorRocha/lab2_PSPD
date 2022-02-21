@@ -23,7 +23,14 @@ struct vetorDeFloats
 	float x[VECTOR_SIZE];
 } vetorDeFloats;
 
+struct maxMinRes
+{
+	float max;
+	float min;
+} maxMinRes;
+
 struct vetorDeFloats vetorzinho;
+struct maxMinRes maxMin;
 
 int main(int argc, char *argv[])
 {
@@ -36,7 +43,6 @@ int main(int argc, char *argv[])
 		vetorzinho.x[i] = sqrt(vetorzinho.x[i]);
 	}
 
-	printf("size - %lu\n", sizeof(vetorzinho));
 	struct sockaddr_in ladoServ; /* contem dados do servidor 	*/
 	int sd;						 /* socket descriptor              */
 	int n, k;					 /* num caracteres lidos do servidor */
@@ -71,6 +77,8 @@ int main(int argc, char *argv[])
 
 	printf("> ");
 	send(sd, &vetorzinho, sizeof(vetorzinho), 0); /* enviando dados ...  */
+	recv(sd, &maxMin, sizeof(maxMin), 0);
+	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max, maxMin.min);
 
 	printf("------- encerrando conexao com o servidor -----\n");
 	close(sd);
