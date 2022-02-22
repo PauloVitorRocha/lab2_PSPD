@@ -15,6 +15,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 #define MAX_WORKERS 10
 #define VECTOR_SIZE 10000
@@ -47,6 +48,7 @@ struct maxMinRes maxMin;
 
 void *func(void *arg)
 {
+	
 	struct ipPorta *ipPorta = (struct ipPorta *)arg;
 
 	struct sockaddr_in ladoServ1; /* contem dados do servidor 	*/
@@ -75,21 +77,24 @@ void *func(void *arg)
 	}
 	struct maxMinParcial maxMinParcial;
 
-	printf("Inside thread\n");
 	send(sd, &vetorzinho, sizeof(vetorzinho), 0); /* enviando dados ...  */
 	recv(sd, &maxMinParcial, sizeof(maxMinParcial), 0);
 	maxMin.max[1] = maxMinParcial.max;
 	maxMin.min[1] = maxMinParcial.min;
-	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max[1], maxMin.min[1]);
-	printf("------- encerrando conexao com o servidor -----\n");
+	
 
 	close(sd);
+
 
 	pthread_exit(0);
 }
 
 int main(int argc, char *argv[])
 {
+	double time_spent = 0.0;
+
+	clock_t begin = clock();
+
 	struct sockaddr_in ladoServ; /* contem dados do servidor 	*/
 	int sd;						 /* socket descriptor              */
 	int n, k;					 /* num caracteres lidos do servidor */
@@ -110,6 +115,7 @@ int main(int argc, char *argv[])
 		printf("uso correto: %s <ip_do_servidor> <porta_do_servidor> <ip_do_outro_servidor> <porta_do_outro_servidor>\n", argv[0]);
 		exit(1);
 	}
+
 	struct ipPorta *ipPorta;
 	ipPorta = malloc(sizeof(struct ipPorta));
 	strcpy((*ipPorta).ip, argv[1]);
@@ -139,7 +145,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("\n\n\n\n\nInside Main \n");
+	printf("Inside Main \n");
 	send(sd, &vetorzinho, sizeof(vetorzinho), 0); /* enviando dados ...  */
 	recv(sd, &maxMinParcial, sizeof(maxMinParcial), 0);
 	maxMin.max[0] = maxMinParcial.max;
@@ -147,11 +153,21 @@ int main(int argc, char *argv[])
 
 	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max[0], maxMin.min[0]);
 
-	printf("------- encerrando conexao com o servidor -----\n\n\n\n");
+	printf("------- encerrando conexao com o servidor -----\n\n\n");
 	close(sd);
+
+	// calculate elapsed time by finding difference (end - begin) and
+	// dividing the difference by CLOCKS_PER_SEC to convert to seconds
+
 	pthread_join(thread1, NULL);
+	printf("After thread \n");
+	printf("Resposta do Sv Thread: Max = %f and Min = %f\n", maxMin.max[1], maxMin.min[1]);
+	printf("------- encerrando conexao com o servidor -----\n\n\n");
 
 	printf("MAXIMO ENTRE OS SERVERS = %f\n", maxMin.max[0] > maxMin.max[1] ? maxMin.max[0] : maxMin.max[1]);
 	printf("MINIMO ENTRE OS SERVERS = %f\n", maxMin.min[0] < maxMin.min[1] ? maxMin.min[0] : maxMin.min[1]);
+	clock_t end = clock();
+	time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+	printf("The elapsed time is %lf seconds\n", time_spent);
 	return (0);
 } /* fim do programa */

@@ -93,7 +93,8 @@ int atende_cliente(int descritor, struct sockaddr_in endCli)
   maxMin.max = 0;
   maxMin.min = 1e10;
 
-  memset(&vetorzinho, 0x0, sizeof(vetorzinho));
+  memset(&vetorzinho, 0, sizeof(vetorzinho));
+  usleep(1000);
   n = recv(descritor, &vetorzinho, sizeof(vetorzinho), 0);
   for (int i = 0; i < 5000; i++)
   {
