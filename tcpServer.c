@@ -16,7 +16,7 @@
 #define QLEN 5      /* tamanho da fila de clientes  */
 #define MAX_SIZE 80 /* tamanho do buffer */
 
-#define VECTOR_SIZE 10001
+#define VECTOR_SIZE 10000
 
 struct vetorDeFloats
 {
@@ -95,7 +95,7 @@ int atende_cliente(int descritor, struct sockaddr_in endCli)
 
   memset(&vetorzinho, 0x0, sizeof(vetorzinho));
   n = recv(descritor, &vetorzinho, sizeof(vetorzinho), 0);
-  for (int i = 0; i < 10000; i++)
+  for (int i = 0; i < 5000; i++)
   {
     if(vetorzinho.x[i]>maxMin.max){
       maxMin.max = vetorzinho.x[i];
@@ -105,6 +105,7 @@ int atende_cliente(int descritor, struct sockaddr_in endCli)
     }
     
   }
+  printf("MAX = %f MIN = %f\n", maxMin.max, maxMin.min);
   z = send(descritor, &maxMin, sizeof(maxMin), 0);
   fprintf(stdout, "[%s:%u] => %f\n", inet_ntoa(endCli.sin_addr), ntohs(endCli.sin_port), vetorzinho.x[0]);
 
