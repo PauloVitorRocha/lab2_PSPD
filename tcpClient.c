@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#define MAX_SIZE 80
+#define MAX_WORKERS 10
 #define VECTOR_SIZE 10000
 
 struct vetorDeFloats
@@ -26,9 +26,15 @@ struct vetorDeFloats
 
 struct maxMinRes
 {
+	float max[MAX_WORKERS];
+	float min[MAX_WORKERS];
+} maxMinRes;
+
+struct maxMinParcial
+{
 	float max;
 	float min;
-} maxMinRes;
+} maxMinParcial;
 
 struct ipPorta
 {
@@ -44,14 +50,14 @@ void *func(void *arg)
 	struct ipPorta *ipPorta = (struct ipPorta *)arg;
 
 	struct sockaddr_in ladoServ1; /* contem dados do servidor 	*/
-	int sd;						 /* socket descriptor              */
-	int n, k;					 /* num caracteres lidos do servidor */
+	int sd;						  /* socket descriptor              */
+	int n, k;					  /* num caracteres lidos do servidor */
 
 	memset((char *)&ladoServ1, 0, sizeof(ladoServ1)); /* limpa estrutura */
 
-	ladoServ1.sin_family = AF_INET;					   /* config. socket p. internet*/
+	ladoServ1.sin_family = AF_INET;						/* config. socket p. internet*/
 	ladoServ1.sin_addr.s_addr = inet_addr(ipPorta->ip); /*ip*/
-	ladoServ1.sin_port = htons(atoi(ipPorta->porta));   /*porta*/
+	ladoServ1.sin_port = htons(atoi(ipPorta->porta));	/*porta*/
 
 	/* Cria socket */
 	sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -67,11 +73,14 @@ void *func(void *arg)
 		fprintf(stderr, "Tentativa de conexao falhou no athread!\n");
 		exit(1);
 	}
+	struct maxMinParcial maxMinParcial;
 
 	printf("Inside thread\n");
 	send(sd, &vetorzinho, sizeof(vetorzinho), 0); /* enviando dados ...  */
-	recv(sd, &maxMin, sizeof(maxMin), 0);
-	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max, maxMin.min);
+	recv(sd, &maxMinParcial, sizeof(maxMinParcial), 0);
+	maxMin.max[1] = maxMinParcial.max;
+	maxMin.min[1] = maxMinParcial.min;
+	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max[1], maxMin.min[1]);
 	printf("------- encerrando conexao com o servidor -----\n");
 
 	close(sd);
@@ -81,6 +90,11 @@ void *func(void *arg)
 
 int main(int argc, char *argv[])
 {
+	struct sockaddr_in ladoServ; /* contem dados do servidor 	*/
+	int sd;						 /* socket descriptor              */
+	int n, k;					 /* num caracteres lidos do servidor */
+	struct maxMinParcial maxMinParcial;
+
 	for (int i = 0; i < VECTOR_SIZE; i++)
 	{
 		vetorzinho.x[i] = pow(i - VECTOR_SIZE / 2, 2);
@@ -89,14 +103,6 @@ int main(int argc, char *argv[])
 	{
 		vetorzinho.x[i] = sqrt(vetorzinho.x[i]);
 	}
-	for (int i = 0; i < VECTOR_SIZE; i++)
-	{
-		printf("v[%d] = %f\n", i, vetorzinho.x[i]);
-	}
-
-	struct sockaddr_in ladoServ; /* contem dados do servidor 	*/
-	int sd;						 /* socket descriptor              */
-	int n, k;					 /* num caracteres lidos do servidor */
 
 	/* confere o numero de argumentos passados para o programa */
 	if (argc < 5)
@@ -135,11 +141,17 @@ int main(int argc, char *argv[])
 
 	printf("\n\n\n\n\nInside Main \n");
 	send(sd, &vetorzinho, sizeof(vetorzinho), 0); /* enviando dados ...  */
-	recv(sd, &maxMin, sizeof(maxMin), 0);
-	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max, maxMin.min);
+	recv(sd, &maxMinParcial, sizeof(maxMinParcial), 0);
+	maxMin.max[0] = maxMinParcial.max;
+	maxMin.min[0] = maxMinParcial.min;
 
-	printf("------- encerrando conexao com o servidor -----\n");
+	printf("Resposta do Sv: Max = %f and Min = %f\n", maxMin.max[0], maxMin.min[0]);
+
+	printf("------- encerrando conexao com o servidor -----\n\n\n\n");
 	close(sd);
 	pthread_join(thread1, NULL);
+
+	printf("MAXIMO ENTRE OS SERVERS = %f\n", maxMin.max[0] > maxMin.max[1] ? maxMin.max[0] : maxMin.max[1]);
+	printf("MINIMO ENTRE OS SERVERS = %f\n", maxMin.min[0] < maxMin.min[1] ? maxMin.min[0] : maxMin.min[1]);
 	return (0);
 } /* fim do programa */
